@@ -1,0 +1,13 @@
+language: python
+python:
+- '3.6'
+script:
+- pytest
+services:
+- redis-server
+deploy:
+  password: dummy
+  provider: pypi
+  user: dmarkey
+  on:
+    tags: true
