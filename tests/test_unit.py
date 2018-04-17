@@ -5,8 +5,6 @@ import unittest
 
 from aiopylimit import AIOPyRateLimit
 from aiohttp.web import Application, json_response, RouteTableDef
-from unittest.mock import Mock
-
 from aiohttp_aiopylimit.limit import (AIOHTTPAIOPyLimit, REDIS_HOST_KEY,
                                       REDIS_PORT_KEY,
                                       REDIS_DB_KEY, REDIS_IS_SENTINAL_KEY,
@@ -223,13 +221,15 @@ class TestDecorator(asynctest.TestCase):
         async def test(request):
             return json_response({"test": True})
 
+        async def test_view(request):
+            return json_response("bad", status=429)
+
         app.add_routes(routes)
         request = UserDict()
         request.app = UserDict()
         request.app['limit_global_namespace_prefix'] = "aiohttp"
         request.app['limit_key_func'] = lambda x: "key"
-        request.app['limit_reached_view'] = lambda x: json_response("bad",
-                                                                 status=429)
+        request.app['limit_reached_view'] = test_view
         ret = await test(request)
         self.assertEqual(ret.status, 429)
         attempt.assert_not_called()
@@ -252,12 +252,14 @@ class TestDecorator(asynctest.TestCase):
 
         app.add_routes(routes)
 
+        async def test_view(request):
+            return json_response("bad", status=429)
+
         request = UserDict()
         request.app = UserDict()
         request.app['limit_global_namespace_prefix'] = "aiohttp"
         request.app['limit_key_func'] = lambda x: "key"
-        request.app['limit_reached_view'] = lambda x: json_response("bad",
-                                                                 status=429)
+        request.app['limit_reached_view'] = test_view
         ret = await test(request)
         self.assertEqual(ret.status, 429)
         attempt.assert_called_once_with(
@@ -273,21 +275,25 @@ class TestDecorator(asynctest.TestCase):
         app = Application()
         routes = RouteTableDef()
 
+        async def test_view(request):
+            return json_response("bad", status=400)
+
         @routes.get("/")
         @aiopylimit("root_view", (60, 1),
-                    limit_reached_view=lambda x: json_response("bad",
-                                                               status=400))
+                    limit_reached_view=test_view)
         async def test(request):
             return json_response({"test": True})
 
         app.add_routes(routes)
 
+        async def test_view2(request):
+            return json_response("bad", status=429)
+
         request = UserDict()
         request.app = UserDict()
         request.app['limit_global_namespace_prefix'] = "aiohttp"
         request.app['limit_key_func'] = lambda x: "key"
-        request.app['limit_reached_view'] = lambda x: json_response("bad",
-                                                                 status=429)
+        request.app['limit_reached_view'] = test_view2
         ret = await test(request)
         self.assertEqual(ret.status, 400)
         attempt.assert_called_once_with(
@@ -303,10 +309,15 @@ class TestDecorator(asynctest.TestCase):
         app = Application()
         routes = RouteTableDef()
 
+        async def test_view(request):
+            return json_response("bad", status=400)
+
+        async def test_view2(request):
+            return json_response("bad", status=429)
+
         @routes.get("/")
         @aiopylimit("root_view", (60, 1),
-                    limit_reached_view=lambda x: json_response("bad",
-                                                               status=400))
+                    limit_reached_view=test_view)
         async def test(request):
             return json_response({"test": True})
 
@@ -316,35 +327,7 @@ class TestDecorator(asynctest.TestCase):
         request.app = UserDict()
         request.app['limit_global_namespace_prefix'] = "aiohttp"
         request.app['limit_key_func'] = lambda x: "key"
-        request.app['limit_reached_view'] = lambda x: json_response("bad",
-                                                                 status=429)
-
-        ret = await test(request)
-        limit_class.assert_called_once_with(60, 1)
-        self.assertEqual(ret.status, 400)
-
-    @asynctest.patch("aiohttp_aiopylimit.decorators.AIOPyRateLimit",
-                     return_value=asynctest.MagicMock(
-                         is_rate_limited=asynctest.CoroutineMock(
-                             return_value=True)))
-    async def test_decorator_sync_view(self, limit_class):
-        app = Application()
-        routes = RouteTableDef()
-
-        @routes.get("/")
-        @aiopylimit("root_view", (60, 1),
-                    limit_reached_view=lambda x: json_response("bad",
-                                                               status=400))
-        def test(request):
-            return json_response({"test": True})
-
-        app.add_routes(routes)
-        request = UserDict()
-        request.app = UserDict()
-        request.app['limit_global_namespace_prefix'] = "aiohttp"
-        request.app['limit_key_func'] = lambda x: "key"
-        request.app['limit_reached_view'] = lambda x: json_response("bad",
-                                                                 status=429)
+        request.app['limit_reached_view'] = test_view2
 
         ret = await test(request)
         limit_class.assert_called_once_with(60, 1)
@@ -355,20 +338,24 @@ class TestDecorator(asynctest.TestCase):
     @asynctest.patch("aiohttp_aiopylimit.limit.AIOPyRateLimit.attempt",
                      return_value=False)
     async def test_decorator_class_based(self, attempt, is_rate_limited):
+
+        async def test_view(request):
+            return json_response("bad", status=400)
+
         class TestClass(object):
             @aiopylimit("root_view", (60, 1),
-                        limit_reached_view=lambda x: json_response(
-                            "bad",
-                            status=400))
+                        limit_reached_view=test_view)
             async def test(self, request):
                 return json_response({"test": True})
+
+        async def test_view2(request):
+            return json_response("bad", status=429)
 
         request = UserDict()
         request.app = UserDict()
         request.app['limit_global_namespace_prefix'] = "aiohttp"
         request.app['limit_key_func'] = lambda x: "key"
-        request.app['limit_reached_view'] = lambda x: json_response("bad",
-                                                                 status=429)
+        request.app['limit_reached_view'] = test_view2
         obj = TestClass()
         obj.request = request
         ret = await obj.test(request)

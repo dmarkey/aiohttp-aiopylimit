@@ -21,18 +21,9 @@ def custom_key(request) -> str:
     return "something"
 
 
-# A custom view to return. This has to be synchronous
-def custom_view(request):
+# A custom view to return. This has to be asynchronous
+async def custom_view(request):
     return web.json_response("bad", status=400)
-
-
-# A simple sync view for example
-@routes.view('/simpleview')
-class SimpleSyncView(web.View):
-
-    @aiopylimit("class_based_get", (60, 1))  # 1 per 60 seconds
-    def get(self, request):
-        return web.json_response('OK')
 
 
 # Sample simple view
@@ -44,7 +35,7 @@ async def test(request):
 
 
 # Sample simple view
-@app.get("/write2")
+@routes.get("/write2")
 @aiopylimit("write_api2", (60, 1))  # 1 per 60 seconds
 async def test(request):
     return web.json_response({"test": True})
@@ -58,4 +49,4 @@ app.add_routes(routes)
 AIOHTTPAIOPyLimit.init_app(app, global_limit=(10, 10))  # 10 per 10 seconds
 
 if __name__ == '__main__':
-    web.run_app(app, host='0.0.0.0', port=8000)
+    web.run_app(app, host='0.0.0.0', port=8001)

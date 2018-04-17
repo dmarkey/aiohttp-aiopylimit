@@ -1,4 +1,3 @@
-import asyncio
 from aiopylimit import AIOPyRateLimit
 import inspect
 
@@ -32,12 +31,9 @@ def aiopylimit(namespace, limit_args, limit_reached_view=None, key_func=None):
 
             if await limiter.is_rate_limited(full_key) \
                     or not await limiter.attempt(full_key):
-                return limit_reached_view_local(request)
+                return await limit_reached_view_local(request)
 
-            response = func(*args, **kwargs)
-
-            if asyncio.iscoroutine(response):
-                return await response
+            response = await func(*args, **kwargs)
             return response
 
         return wrapper

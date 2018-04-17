@@ -15,7 +15,7 @@ def default_key_func(request):
 
 
 def create_default_view(status_code=429):
-    def view(request):
+    async def view(request):
         return json_response("Limit reached, try again later.",
                              status=status_code)
     return view
@@ -66,7 +66,7 @@ class AIOHTTPAIOPyLimit(object):
                            f'{global_limit_namespace}-{key}'
                 if await global_limiter.is_rate_limited(full_key) \
                         or not await global_limiter.attempt(full_key):
-                    return limit_reached_view(request)
+                    return await limit_reached_view(request)
                 return await handler(request)
 
             app.middlewares.append(global_limit_middleware)
