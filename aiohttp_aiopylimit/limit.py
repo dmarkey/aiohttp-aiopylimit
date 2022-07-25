@@ -6,6 +6,7 @@ REDIS_PORT_KEY = "AIOHTTP_AIOPYRATELIMIT_REDIS_PORT"
 REDIS_DB_KEY = "AIOHTTP_AIOPYRATELIMIT_REDIS_DB"
 REDIS_PASSWORD_KEY = "AIOHTTP_AIOPYRATELIMIT_PASSWORD_DB"
 REDIS_IS_SENTINAL_KEY = "AIOHTTP_AIOPYRATELIMIT_IS_SENTINAL"
+REDIS_SSL = "AIOHTTP_AIOPYRATELIMIT_REDIS_SSL"
 
 
 def default_key_func(request):
@@ -43,6 +44,7 @@ class AIOHTTPAIOPyLimit(object):
         redis_db = int(app.get(REDIS_DB_KEY, 1))
         is_sentinal_redis = bool(app.get(REDIS_IS_SENTINAL_KEY, 0))
         redis_password = app.get(REDIS_PASSWORD_KEY, None)
+        redis_ssl = bool(app.get(REDIS_SSL, False))
 
         app['limit_key_func'] = key_func
         app['limit_reached_view'] = limit_reached_view
@@ -54,6 +56,7 @@ class AIOHTTPAIOPyLimit(object):
             db=redis_db,
             is_sentinel_redis=is_sentinal_redis,
             redis_password=redis_password,
+            ssl=redis_ssl,
             force_new_connection=True)
 
         if global_limit is not None:
