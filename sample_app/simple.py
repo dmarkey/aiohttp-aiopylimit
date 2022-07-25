@@ -44,7 +44,7 @@ async def test(request):
 app.add_routes(routes)
 
 # Initialise the app
-AIOHTTPAIOPyLimit.init_app(app, aioredis.from_url("redis://redis"), global_limit=(10, 10))  # 10 per 10 seconds
+AIOHTTPAIOPyLimit.init_app(app, aioredis.from_url("redis://localhost"), global_limit=(10, 10))  # 10 per 10 seconds
 
 if __name__ == '__main__':
     web.run_app(app, host='0.0.0.0', port=8001)
