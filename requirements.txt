@@ -1,5 +1,5 @@
 aiohttp==3.8.1
-aiopylimit==1.0.0
+aiopylimit==1.0.1
 aioredis==1.1.0
 aiosignal==1.2.0
 async-timeout==4.0.2
