@@ -9,7 +9,7 @@ setup(
   setup_requires=['setuptools_scm'],
   url='https://github.com/dmarkey/aiohttp-aiopylimit',
   install_requires=[
-      'aiopylimit<=0.2.2',
+      'aiopylimit<=1.0.1',
   ],
   keywords=['rate limiting', 'throttle', 'redis', 'asyncio', 'aiohttp'],
   classifiers=[],
