@@ -1,4 +1,5 @@
 from aiohttp import web
+import redis.asyncio as aioredis
 
 
 from aiohttp_aiopylimit.decorators import aiopylimit
@@ -40,13 +41,10 @@ async def test(request):
 async def test(request):
     return web.json_response({"test": True})
 
-# Local redis host
-app['AIOHTTP_AIOPYRATELIMIT_REDIS_HOST'] = "localhost"
-
 app.add_routes(routes)
 
 # Initialise the app
-AIOHTTPAIOPyLimit.init_app(app, global_limit=(10, 10))  # 10 per 10 seconds
+AIOHTTPAIOPyLimit.init_app(app, aioredis.from_url("redis://localhost"), global_limit=(10, 10))  # 10 per 10 seconds
 
 if __name__ == '__main__':
     web.run_app(app, host='0.0.0.0', port=8001)

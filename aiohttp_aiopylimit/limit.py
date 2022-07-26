@@ -23,13 +23,11 @@ def create_default_view(status_code=429):
 
 class AIOHTTPAIOPyLimit(object):
     @classmethod
-    def init_app(cls, app, limit_reached_view=None,
+    def init_app(cls, app, connection, limit_reached_view=None,
                  limit_reached_http_code=429, global_limit=None,
                  global_limit_namespace="pylimit_global",
                  global_namespace_prefix="aiohttp-aiopylimit",
                  key_func=default_key_func):
-        if REDIS_HOST_KEY not in app:
-            raise ValueError("Need a redis server host defined")
 
         if limit_reached_http_code != 429 and limit_reached_view is not None:
             raise ValueError("Please implement the "
@@ -38,23 +36,13 @@ class AIOHTTPAIOPyLimit(object):
         if limit_reached_view is None:
             limit_reached_view = create_default_view(limit_reached_http_code)
 
-        redis_host = app[REDIS_HOST_KEY]
-        redis_port = int(app.get(REDIS_PORT_KEY, 6379))
-        redis_db = int(app.get(REDIS_DB_KEY, 1))
-        is_sentinal_redis = bool(app.get(REDIS_IS_SENTINAL_KEY, 0))
-        redis_password = app.get(REDIS_PASSWORD_KEY, None)
-
         app['limit_key_func'] = key_func
         app['limit_reached_view'] = limit_reached_view
         app['limit_global_namespace_prefix'] = global_namespace_prefix
 
         AIOPyRateLimit.init(
-            redis_host=redis_host,
-            redis_port=redis_port,
-            db=redis_db,
-            is_sentinel_redis=is_sentinal_redis,
-            redis_password=redis_password,
-            force_new_connection=True)
+            connection
+            )
 
         if global_limit is not None:
             global_limiter = AIOPyRateLimit(*global_limit)
